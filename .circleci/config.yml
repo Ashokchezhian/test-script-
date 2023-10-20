@@ -1,0 +1,26 @@
+version: 2.1
+
+executors:
+  default:
+    docker:
+      - image: circleci/openjdk:11-jdk
+
+jobs:
+  build:
+    executor: default
+    steps:
+      - checkout
+
+      - run:
+          name: Build and Test
+          command: |
+            mvn clean install
+          environment:
+            # You can set environment variables here if needed
+            # EXAMPLE_VARIABLE: "example_value"
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
