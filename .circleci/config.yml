@@ -26,8 +26,10 @@ jobs:
             echo $GCP_SA_KEY | base64 --decode > /tmp/gcp_sa_key.json            # Authenticate using the service account key
             gcloud auth activate-service-account --key-file=/tmp/gcp_sa_key.json            # Set the GCP project ID
             gcloud config set project "titledev"
+          
       - run:
           name: Build and Test
+
           command: |
             mvn clean install
 
@@ -36,4 +38,4 @@ workflows:
   build:
     jobs:
       - build:
-          context: gcp-auth
+          context: Gcp-auth
