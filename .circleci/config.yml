@@ -21,13 +21,13 @@ jobs:
             echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
             sudo apt-get update && sudo apt-get install google-cloud-sdk
 
-      - run:
-          name: Authenticate with Google Cloud
+       - run:
+          name: Authenticate to GCP
           command: |
-            echo "$GCLOUD_SERVICE_KEY" | base64 -d > gcp_key.p12
-            gcloud auth activate-service-account --key-file=gcp_key.p12 --project="titledev"
-            # Replace YOUR_PROJECT_ID with your actual GCP project ID
-
+            # Set the GCP service account key from the context as an environment variable
+            echo $GCP_SA_KEY | base64 --decode > /tmp/gcp_sa_key.json            # Authenticate using the service account key
+            gcloud auth activate-service-account --key-file=/tmp/gcp_sa_key.json            # Set the GCP project ID
+            gcloud config set project "titledev"
       - run:
           name: Build and Test
           command: |
