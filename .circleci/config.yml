@@ -26,12 +26,20 @@ jobs:
             echo $GCP_SA_KEY | base64 --decode > /tmp/gcp_sa_key.json            # Authenticate using the service account key
             gcloud auth activate-service-account --key-file=/tmp/gcp_sa_key.json            # Set the GCP project ID
             gcloud config set project "test-script"
-          
+
+      - run:
+          name: Decode Base64
+          command: |
+           input_data="SGVsbG8gd29ybGQh"
+           decoded_data=$(echo -n $input_data | base64 --decode)
+           echo $decoded_data
+         
       - run:
           name: Build and Test
 
           command: |
             mvn clean install
+
 
 workflows:
   version: 2
