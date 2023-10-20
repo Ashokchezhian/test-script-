@@ -12,12 +12,23 @@ jobs:
       - checkout
 
       - run:
+          name: Install GCP CLI
+          command: |
+            echo 'export PATH=$PATH:/opt/google-cloud-sdk/bin' >> $BASH_ENV
+            sudo apt-get update
+            sudo apt-get install -y curl apt-transport-https lsb-release software-properties-common
+            curl -sSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+            echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+            sudo apt-get update && sudo apt-get install google-cloud-sdk
+
+      - run:
+          name: Authenticate with Google Cloud
+          command: echo "$GCLOUD_SERVICE_KEY" | gcloud auth activate-service-account --key-file=-
+
+      - run:
           name: Build and Test
           command: |
             mvn clean install
-          environment:
-            # You can set environment variables here if needed
-            # EXAMPLE_VARIABLE: "example_value"
 
 workflows:
   version: 2
