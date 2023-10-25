@@ -1,34 +1,48 @@
 version: 2.1
 
-jobs:
-  build_and_check:
+executors:
+  default:
     docker:
       - image: circleci/openjdk:11-jdk
+
+jobs:
+  build:
+    executor: default
     steps:
       - checkout
       - run:
-          name: Install Google Cloud SDK
+          name: Install GCP CLI
           command: |
-            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+            echo 'export PATH=$PATH:/opt/google-cloud-sdk/bin' >> $BASH_ENV
+            sudo apt-get update
+            sudo apt-get install -y curl apt-transport-https lsb-release software-properties-common
+            curl -sSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+            echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
             sudo apt-get update && sudo apt-get install google-cloud-sdk
+      - run:
+          name: Authenticate to GCP
+          command: |
+            # Set the GCP service account key from the context as an environment variable
+            echo $GCP_SA_KEY | base64 --decode > /tmp/gcp_sa_key.json            # Authenticate using the service account key
+            gcloud auth activate-service-account --key-file=/tmp/gcp_sa_key.json            # Set the GCP project ID
+            gcloud config set project "titledev"
 
       - run:
-          name: Set up Google Cloud credentials
+          name: Decode Base64
           command: |
-            echo $GCP_SERVICE_ACCOUNT_KEY > /tmp/service-account.json
-            echo 'export GOOGLE_APPLICATION_CREDENTIALS=/tmp/service-account.json' >> $BASH_ENV
+           input_data="SGVsbG8gd29ybGQh"
+           decoded_data=$(echo -n $input_data | base64 --decode)
+           echo $decoded_data
+         
       - run:
-          name: Authenticate with Google Cloud
+          name: Build and Test
           command: |
-            gcloud auth activate-service-account --key-file=/tmp/service-account.json
-            gcloud auth list
-      - run:
-          name: Build with Maven
-          command: mvn clean install
+           mvn clean install
+
 
 workflows:
   version: 2
-  login_and_build:
+  build:
     jobs:
-      - build_and_check
+      - build:
+          context: gcp-auth
