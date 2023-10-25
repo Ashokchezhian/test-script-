@@ -1,30 +1,29 @@
 version: 2.1
 
-executors:
-  gcloud:
+jobs:
+  build_and_check:
     docker:
-      - image: google/cloud-sdk:latest
-
-commands:
-  authenticate_gcloud:
-    description: Authenticate with GCP.
+      - image: circleci/openjdk:11-jdk
     steps:
+      - checkout
+      - run:
+          name: Install Google Cloud SDK
+          command: |
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+            sudo apt-get update && sudo apt-get install google-cloud-sdk
       - run:
           name: Authenticate with Google Cloud
           command: |
             echo $GCP_SERVICE_ACCOUNT_KEY | gcloud auth activate-service-account --key-file=-
             gcloud auth list
-
-jobs:
-  gcp_login_check:
-    executor: gcloud
-    steps:
-      - authenticate_gcloud
+      - run:
+          name: Build with Maven
+          command: mvn clean install
 
 workflows:
   version: 2
-  login_check:
+  login_and_build:
     jobs:
-      - gcp_login_check
-
+      - build_and_check
 
