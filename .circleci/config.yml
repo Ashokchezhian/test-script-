@@ -1,6 +1,5 @@
 version: 2.1
 
-<<<<<<< HEAD
 jobs:
   build_and_check:
     docker:
@@ -33,33 +32,3 @@ workflows:
   login_and_build:
     jobs:
       - build_and_check
-=======
-executors:
-  gcloud:
-    docker:
-      - image: google/cloud-sdk:latest
-
-commands:
-  authenticate_gcloud:
-    description: Authenticate with GCP.
-    steps:
-      - run:
-          name: Authenticate with Google Cloud
-          command: |
-            echo $GCP_SERVICE_ACCOUNT_KEY | gcloud auth activate-service-account --key-file=-
-            gcloud auth list
-
-jobs:
-  gcp_login_check:
-    executor: gcloud
-    steps:
-      - authenticate_gcloud
-
-workflows:
-  version: 2
-  login_check:
-    jobs:
-      - gcp_login_check
-
-
->>>>>>> 485330f63d723ae2c4cdf7ffe02af5285bf3f010
