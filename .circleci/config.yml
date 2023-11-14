@@ -3,20 +3,29 @@ version: 2.1
 jobs:
   authenticate-with-1password-and-gcp:
     docker:
-      - image: google/cloud-sdk:latest
+      - image: alpine:latest
     steps:
       - checkout
       - run:
-          name: Install 1Password CLI
+          name: Add 1Password CLI Repository
           command: |
-            curl -sS https://downloads.1password.com/command-line/1password-cli-2.12.0-linux.tar.gz -o op.tar.gz
-            tar -xzf op.tar.gz -C /usr/local/bin/
-            rm op.tar.gz
+            echo https://downloads.1password.com/linux/alpinelinux/stable/ >> /etc/apk/repositories
+            wget https://downloads.1password.com/linux/keys/alpinelinux/support@1password.com-61ddfc31.rsa.pub -P /etc/apk/keys
+            apk update
 
       - run:
-          name: Authenticate with 1Password and Retrieve GCP Key
+          name: Install 1Password CLI
+          command: |
+            apk add 1password-cli
+
+      - run:
+          name: Authenticate with 1Password
           command: |
             export OP_SESSION=$(op signin my $OP_SERVICE_ACCOUNT_EMAIL $OP_SERVICE_ACCOUNT_SECRET)
+            
+      - run:
+          name: Retrieve GCP Key from 1Password
+          command: |
             GCP_KEY=$(op get document gcp_credentials/gcp_key)
 
       - run:
