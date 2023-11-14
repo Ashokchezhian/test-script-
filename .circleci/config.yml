@@ -1,19 +1,23 @@
 version: 2.1
 
-orbs:
-  onepassword: https://github.com/1Password/onepassword-circleci-orb/releases/download/v1.0.0/onepassword-orb.yml
-
 jobs:
   list-1password-vaults:
     docker:
       - image: circleci/python:3.8
     steps:
       - checkout
-      - onepassword/install:
-          command: op
-      - onepassword/configure:
-          email: $OP_SERVICE_ACCOUNT_EMAIL
-          secret: $OP_SERVICE_ACCOUNT_SECRET
+      - run:
+          name: Install 1Password CLI
+          command: |
+            curl -sS https://cache.agilebits.com/dist/1P/op/pkg/v2.12.0/op_linux_amd64_v2.12.0.zip -o op.zip
+            unzip -o op.zip -d /usr/local/bin/
+            rm op.zip
+
+      - run:
+          name: Authenticate with 1Password
+          command: |
+            export OP_SESSION=$(op signin my $OP_SERVICE_ACCOUNT_EMAIL $OP_SERVICE_ACCOUNT_SECRET)
+
       - run:
           name: List 1Password Vaults
           command: |
