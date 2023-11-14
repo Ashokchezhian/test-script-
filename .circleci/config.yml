@@ -9,13 +9,15 @@ jobs:
       - run:
           name: Install 1Password CLI
           command: |
-            curl -sL https://1password.com/downloads/command-line/ | sh
+            curl -sL https://cache.agilebits.com/dist/1P/op/pkg/v2.12.0/op_linux_amd64_v2.12.0.zip -o op.zip
+            unzip op.zip
             mv op /usr/local/bin/op
+            rm op.zip
 
       - run:
           name: Authenticate with 1Password
           command: |
-            OP_SESSION=$(op signin my --output=raw $OP_SERVICE_ACCOUNT_EMAIL $OP_SERVICE_ACCOUNT_SECRET)
+            op signin my $OP_SERVICE_ACCOUNT_EMAIL $OP_SERVICE_ACCOUNT_SECRET
 
       - run:
           name: List 1Password Vaults
