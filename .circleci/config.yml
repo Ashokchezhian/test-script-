@@ -1,25 +1,30 @@
 version: 2.1
 
 jobs:
-  build_and_check:
+  verify-1password-integration:
     docker:
-      - image: circleci/openjdk:11-jdk
+      - image: circleci/python:3.8
+
     steps:
       - checkout
-      - run:
-          name: Install Google Cloud SDK
-          command: |
-            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-            sudo apt-get update && sudo apt-get install google-cloud-sdk
 
-      
+      # Fetch the 1Password token from the context
       - run:
-          name: Build with Maven
-          command: mvn clean install
+          name: Fetch 1Password token
+          command: |
+            export OP_TOKEN=$(circleci context show 1pass_cred --json | jq -r '.contexts[0].OP_SERVICE_ACCOUNT_TOKEN')
+
+      # Perform some verification using the 1Password API
+      # Replace this with your actual verification logic
+      - run:
+          name: Verify 1Password integration
+          command: |
+            curl -X GET \
+              -H "Authorization: Bearer $OP_TOKEN" \
+              "https://example.1password.com/api/v1/some-endpoint"
 
 workflows:
   version: 2
-  login_and_build:
+  build:
     jobs:
-      - build_and_check
+      - verify-1password-integration
