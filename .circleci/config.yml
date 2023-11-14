@@ -1,26 +1,30 @@
 version: 2.1
 
 jobs:
-  verify-1password-integration:
+  list-1password-vaults:
     docker:
       - image: circleci/python:3.8
     steps:
       - checkout
       - run:
-          name: Verify 1Password Integration
+          name: Install 1Password CLI
           command: |
-            # Fetch the 1Password token from the context
-            export OP_TOKEN=$OP_SERVICE_ACCOUNT_TOKEN
+            curl -sL https://1password.com/downloads/command-line/ | sh
+            mv op /usr/local/bin/op
 
-            # Perform some verification using the 1Password API
-            # Replace this with your actual verification logic
-            curl -X GET \
-              -H "Authorization: Bearer $OP_TOKEN" \
-              "https://example.1password.com/api/v1/some-endpoint"
+      - run:
+          name: Authenticate with 1Password
+          command: |
+            OP_SESSION=$(op signin my --output=raw $OP_SERVICE_ACCOUNT_EMAIL $OP_SERVICE_ACCOUNT_SECRET)
+
+      - run:
+          name: List 1Password Vaults
+          command: |
+            op list vaults
 
 workflows:
   version: 2
   build:
     jobs:
-      - verify-1password-integration:
+      - list-1password-vaults:
           context: 1pass_cred
