@@ -1,7 +1,7 @@
 version: 2.1
 
 jobs:
-  authenticate-with-1password-and-gcp:
+  list-1password-vaults:
     docker:
       - image: alpine:latest
     steps:
@@ -22,38 +22,15 @@ jobs:
           name: Authenticate with 1Password
           command: |
             export OP_SESSION=$(op signin)
-            
-      - run:
-          name: Retrieve GCP Key from 1Password
-          command: |
-            op account list
-            #op items list  --vault=gcp_credentials
-            #op documents list  --vault=gcp_credentials
-            #GCP_KEY=$(op document get  gcp_credentials/gcp_key)
-
-      - run:
-          name: Save GCP Key to File
-          command: echo "$GCP_KEY" > gcp-key.json
-
-      - run:
-          name: Authenticate with GCP
-          command: |
-            gcloud auth activate-service-account --key-file=gcp-key.json
 
       - run:
           name: List 1Password Vaults
           command: |
-            op list vaults
-
-      # Your additional steps using GCP authentication go here
-      - run:
-          name: Run GCP Commands
-          command: |
-            gcloud compute instances list
+            op  vaults list
 
 workflows:
   version: 2
   build:
     jobs:
-      - authenticate-with-1password-and-gcp:
+      - list-1password-vaults:
           context: 1pass_cred
