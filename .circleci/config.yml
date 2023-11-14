@@ -21,7 +21,7 @@ jobs:
       - run:
           name: Authenticate with 1Password
           command: |
-            export OP_SESSION=$(op signin my $OP_SERVICE_ACCOUNT_EMAIL $OP_SERVICE_ACCOUNT_SECRET)
+            export OP_SESSION=$(op signin)
             
       - run:
           name: Retrieve GCP Key from 1Password
