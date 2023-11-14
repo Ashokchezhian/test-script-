@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  1password: onepassword/secrets@volatile
+  1password: onepassword/secrets@volatile # thirparty orb
 
 jobs:
   list-1password-vaults:
@@ -25,3 +25,4 @@ workflows:
     jobs:
       - list-1password-vaults:
           context: 1pass_cred
+
