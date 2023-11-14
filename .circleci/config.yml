@@ -3,15 +3,21 @@ version: 2.1
 jobs:
   list-1password-vaults:
     docker:
-      - image: circleci/python:3.8
+      - image: alpine:latest
     steps:
       - checkout
       - run:
+          name: Add 1Password CLI Repository
+          command: |
+            echo https://downloads.1password.com/linux/alpinelinux/stable/ >> /etc/apk/repositories
+            wget https://downloads.1password.com/linux/keys/alpinelinux/support@1password.com-61ddfc31.rsa.pub -P /etc/apk/keys
+            apk update
+
+      - run:
           name: Install 1Password CLI
           command: |
-              echo https://downloads.1password.com/linux/alpinelinux/stable/ >> /etc/apk/repositories
-              wget https://downloads.1password.com/linux/keys/alpinelinux/support@1password.com-61ddfc31.rsa.pub -P /etc/apk/keys
-              apk update && apk add 1password-cli
+            apk add 1password-cli
+
       - run:
           name: Authenticate with 1Password
           command: |
