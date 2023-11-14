@@ -9,9 +9,9 @@ jobs:
       - run:
           name: Install 1Password CLI
           command: |
-            curl -sS https://cache.agilebits.com/dist/1P/op/pkg/v2.12.0/op_linux_amd64_v2.12.0.zip -o op.zip
-            unzip -o op.zip -d /usr/local/bin/
-            rm op.zip
+            curl -sS https://cache.agilebits.com/dist/1P/op/pkg/v2.12.0/op_linux_amd64_v2.12.0.tar.gz -o op.tar.gz
+            tar -xzf op.tar.gz -C /usr/local/bin/
+            rm op.tar.gz
 
       - run:
           name: Authenticate with 1Password
