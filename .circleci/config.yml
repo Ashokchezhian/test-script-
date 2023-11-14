@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  1password: onepassword/secrets@volatile # thirparty orb
+  onepassword: https://github.com/1Password/onepassword-circleci-orb/releases/download/v1.0.0/onepassword-orb.yml
 
 jobs:
   list-1password-vaults:
@@ -25,4 +25,3 @@ workflows:
     jobs:
       - list-1password-vaults:
           context: 1pass_cred
-
