@@ -26,6 +26,8 @@ jobs:
       - run:
           name: Retrieve GCP Key from 1Password
           command: |
+            op list items --vault=gcp_credentials
+            op list documents --vault=gcp_credentials
             GCP_KEY=$(op document get  gcp_credentials/gcp_key)
 
       - run:
