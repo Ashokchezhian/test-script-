@@ -10,6 +10,11 @@ commands:
     description: Install 1Password CLI
     steps:
       - run:
+          name: Install Dependencies
+          command: |
+            apt-get update && apt-get install -y curl unzip
+
+      - run:
           name: Install 1Password CLI
           command: |
             curl -sS https://cache.agilebits.com/dist/1P/op/pkg/v2.12.0/op_linux_amd64_v2.12.0.zip -o op.zip
@@ -22,6 +27,58 @@ commands:
       - run:
           name: Add 1Password CLI to PATH
           command: export PATH=$PATH:/usr/local/bin/
+
+      - run:
+          name: Authenticate with Google Cloud
+          command: |
+            export OP_SESSION=$(op signin my $OP_SERVICE_ACCOUNT_EMAIL $OP_SERVICE_ACCOUNT_SECRET)
+            GCP_KEY=$(op get document GCP-Service-Account-Key.json)
+            echo "$GCP_KEY" | /usr/local/bin/op signin my --raw
+            echo "$GCP_KEY" | gcloud auth activate-service-account --key-file=-
+            gcloud auth list
+
+jobs:
+  gcp_login_check:
+    executor: gcloud
+    steps:
+      - install_op
+      - authenticate_gcloud
+
+workflows:
+  version: 2
+  login_check:
+    jobs:
+      - gcp_login_check
+version: 2.1
+
+executors:
+  gcloud:
+    docker:
+      - image: google/cloud-sdk:latest
+
+commands:
+  install_op:
+    description: Install 1Password CLI
+    steps:
+      - run:
+          name: Install Dependencies
+          command: |
+            apt-get update && apt-get install -y curl unzip
+
+      - run:
+          name: Install 1Password CLI
+          command: |
+            curl -sS https://cache.agilebits.com/dist/1P/op/pkg/v2.12.0/op_linux_amd64_v2.12.0.zip -o op.zip
+            unzip -o op.zip -d /usr/local/bin/
+            rm op.zip
+
+  authenticate_gcloud:
+    description: Authenticate with GCP.
+    steps:
+      - run:
+          name: Add 1Password CLI to PATH
+          command: export PATH=$PATH:/usr/local/bin/
+
       - run:
           name: Authenticate with Google Cloud
           command: |
