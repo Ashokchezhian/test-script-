@@ -1,51 +1,47 @@
 version: 2.1
 
-executors:
-  gcloud:
+jobs:
+  authenticate-with-1password-and-gcp:
     docker:
       - image: google/cloud-sdk:latest
-
-commands:
-  install_op:
-    description: Install 1Password CLI
     steps:
-      - run:
-          name: Install Dependencies
-          command: |
-            apt-get update && apt-get install -y curl unzip
-
+      - checkout
       - run:
           name: Install 1Password CLI
           command: |
-            curl -sS https://cache.agilebits.com/dist/1P/op/pkg/v2.12.0/op_linux_amd64_v2.12.0.zip -o op.zip
-            unzip -o op.zip -d /usr/local/bin/
-            rm op.zip
-
-  authenticate_gcloud:
-    description: Authenticate with GCP.
-    steps:
-      - run:
-          name: Add 1Password CLI to PATH
-          command: export PATH=$PATH:/usr/local/bin/
+            curl -sS https://downloads.1password.com/command-line/1password-cli-2.12.0-linux.tar.gz -o op.tar.gz
+            tar -xzf op.tar.gz -C /usr/local/bin/
+            rm op.tar.gz
 
       - run:
-          name: Authenticate with Google Cloud
+          name: Authenticate with 1Password and Retrieve GCP Key
           command: |
             export OP_SESSION=$(op signin my $OP_SERVICE_ACCOUNT_EMAIL $OP_SERVICE_ACCOUNT_SECRET)
-            GCP_KEY=$(op get document GCP-Service-Account-Key.json)
-            echo "$GCP_KEY" | /usr/local/bin/op signin my --raw
-            echo "$GCP_KEY" | gcloud auth activate-service-account --key-file=-
-            gcloud auth list
+            GCP_KEY=$(op get document gcp_credentials/gcp_key)
 
-jobs:
-  gcp_login_check:
-    executor: gcloud
-    steps:
-      - install_op
-      - authenticate_gcloud
+      - run:
+          name: Save GCP Key to File
+          command: echo "$GCP_KEY" > gcp-key.json
+
+      - run:
+          name: Authenticate with GCP
+          command: |
+            gcloud auth activate-service-account --key-file=gcp-key.json
+
+      - run:
+          name: List 1Password Vaults
+          command: |
+            op list vaults
+
+      # Your additional steps using GCP authentication go here
+      - run:
+          name: Run GCP Commands
+          command: |
+            gcloud compute instances list
 
 workflows:
   version: 2
-  login_check:
+  build:
     jobs:
-      - gcp_login_check
+      - authenticate-with-1password-and-gcp:
+          context: 1pass_cred
