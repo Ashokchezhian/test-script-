@@ -1,36 +1,31 @@
 version: 2.1
 
-jobs:
-  list-1password-vaults:
+executors:
+  gcloud:
     docker:
-      - image: alpine:latest
+      - image: google/cloud-sdk:latest
+
+commands:
+  authenticate_gcloud:
+    description: Authenticate with GCP.
     steps:
       - checkout
       - run:
-          name: Add 1Password CLI Repository
+          name: Authenticate with Google Cloud
           command: |
-            echo https://downloads.1password.com/linux/alpinelinux/stable/ >> /etc/apk/repositories
-            wget https://downloads.1password.com/linux/keys/alpinelinux/support@1password.com-61ddfc31.rsa.pub -P /etc/apk/keys
-            apk update
+            export OP_SESSION=$(op signin my $OP_SERVICE_ACCOUNT_EMAIL $OP_SERVICE_ACCOUNT_SECRET)
+            GCP_KEY=$(op get document GCP-Service-Account-Key.json)
+            echo "$GCP_KEY" | gcloud auth activate-service-account --key-file=-
+            gcloud auth list
 
-      - run:
-          name: Install 1Password CLI
-          command: |
-            apk add 1password-cli
-
-      - run:
-          name: Authenticate with 1Password
-          command: |
-            export OP_SESSION=$(op signin)
-
-      - run:
-          name: List 1Password Vaults
-          command: |
-            op  vaults list
+jobs:
+  gcp_login_check:
+    executor: gcloud
+    steps:
+      - authenticate_gcloud
 
 workflows:
   version: 2
-  build:
+  login_check:
     jobs:
-      - list-1password-vaults:
-          context: 1pass_cred
+      - gcp_login_check
