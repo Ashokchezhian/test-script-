@@ -35,7 +35,7 @@ jobs:
 
             op document list
             
-            op vault ls 
+            op vault ls #
 
 workflows:
   version: 2
