@@ -1,47 +1,47 @@
 version: 2.1
 
 jobs:
-  authenticate-with-1password-and-gcp:
+  list-1password-vaults:
     docker:
-      - image: google/cloud-sdk:latest
+      - image: alpine:latest
     steps:
       - checkout
       - run:
+          name: Add 1Password CLI Repository
+          command: |
+            echo https://downloads.1password.com/linux/alpinelinux/stable/ >> /etc/apk/repositories
+            wget https://downloads.1password.com/linux/keys/alpinelinux/support@1password.com-61ddfc31.rsa.pub -P /etc/apk/keys
+            apk update
+
+      - run:
           name: Install 1Password CLI
           command: |
-            curl -sS https://downloads.1password.com/command-line/1password-cli-2.12.0-linux.tar.gz -o op.tar.gz
-            tar -xzf op.tar.gz -C /usr/local/bin/
-            rm op.tar.gz
+            apk add 1password-cli
 
       - run:
-          name: Authenticate with 1Password and Retrieve GCP Key
+          name: Authenticate with 1Password
           command: |
-            export OP_SESSION=$(op signin my $OP_SERVICE_ACCOUNT_EMAIL $OP_SERVICE_ACCOUNT_SECRET)
-            GCP_KEY=$(op get document gcp_credentials/gcp_key)
+              export OP_SERVICE_ACCOUNT_TOKEN=$OP_SERVICE_ACCOUNT_TOKEN
 
       - run:
-          name: Save GCP Key to File
-          command: echo "$GCP_KEY" > gcp-key.json
-
-      - run:
-          name: Authenticate with GCP
-          command: |
-            gcloud auth activate-service-account --key-file=gcp-key.json
-
+          name: list the user
+          command: | 
+              op user get --me 
       - run:
           name: List 1Password Vaults
           command: |
-            op list vaults
+            # Assuming GCP_SERVICE_ACCOUNT_KEY contains the service account key
+            echo $GCP_SERVICE_ACCOUNT_KEY > /tmp/service-account.json
 
-      # Your additional steps using GCP authentication go here
-      - run:
-          name: Run GCP Commands
-          command: |
-            gcloud compute instances list
+            op document list
+            
+            op vault ls 
 
 workflows:
   version: 2
   build:
     jobs:
-      - authenticate-with-1password-and-gcp:
+      - list-1password-vaults:
           context: 1pass_cred
+
+
