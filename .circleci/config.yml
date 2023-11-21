@@ -31,9 +31,9 @@ jobs:
           name: List 1Password Vaults
           command: |
             # Assuming GCP_SERVICE_ACCOUNT_KEY contains the service account key
-            echo $GCP_SERVICE_ACCOUNT_KEY > /tmp/service-account.json 
+            echo $GCP_SERVICE_ACCOUNT_KEY > /tmp/service-account.json
 
-            op document list  #
+            op document list #
             
             op vault ls 
 
@@ -43,5 +43,4 @@ workflows:
     jobs:
       - list-1password-vaults:
           context: 1pass_cred
-
 
