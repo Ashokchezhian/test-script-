@@ -12,10 +12,7 @@ jobs:
             echo https://downloads.1password.com/linux/alpinelinux/stable/ >> /etc/apk/repositories
             wget https://downloads.1password.com/linux/keys/alpinelinux/support@1password.com-61ddfc31.rsa.pub -P /etc/apk/keys
             apk update
-            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-            sudo apt-get update && sudo apt-get install google-cloud-sdk
-
+            
       - run:
           name: Install 1Password CLI
           command: |
@@ -31,13 +28,18 @@ jobs:
           command: | 
               op user get --me 
            
-            
+      - run:
+          name: Install GCP sdk
+          command: | 
+              echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+              curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+              sudo apt-get update && sudo apt-get install google-cloud-sdk
+
       - run:
           name: List 1Password Vaults
           command: |
 
             GCP_SERVICE_ACCOUNT_KEY=$(op document get "gcp_auth" --out-file secret-plans.text --vault GCP_AUTH_VAULT)
-          
             echo $GCP_SERVICE_ACCOUNT_KEY > /tmp/service-account.json
             echo 'export GOOGLE_APPLICATION_CREDENTIALS=/tmp/service-account.json' >> $BASH_ENV
 
