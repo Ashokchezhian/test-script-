@@ -26,7 +26,7 @@ jobs:
       - run:
           name: list the user
           command: | 
-            #op user get --me 
+            op user get --me 
       - run:
           name: List 1Password Vaults
           command: |
@@ -41,5 +41,4 @@ workflows:
   version: 2
   build:
     jobs:
-      - list-1password-vaults:
-            context: 1pass_cred
+      - list-1password-vaults
