@@ -33,7 +33,7 @@ jobs:
             # Assuming GCP_SERVICE_ACCOUNT_KEY contains the service account key
             #GCP_SERVICE_ACCOUNT_KEY=$(op document get gcp_auth --vault="GCP_AUTH_VAULT" )
             #echo "export GCP_SERVICE_ACCOUNT_KEY='$GCP_SERVICE_ACCOUNT_KEY'" >> $BASH_ENV
-            op document get "gcp_auth" --out-file secret-plans.text
+            op document get "gcp_auth" --out-file secret-plans.text --vault GCP_AUTH_VAULT
 
             
             op vault ls 
