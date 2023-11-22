@@ -7,6 +7,12 @@ jobs:
     steps:
       - checkout
       - run:
+        name: Install Google Cloud SDK
+        command: |
+          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+          sudo apt-get update && sudo apt-get install google-cloud-sdk
+      - run:
           name: Add 1Password CLI Repository
           command: |
             echo https://downloads.1password.com/linux/alpinelinux/stable/ >> /etc/apk/repositories
@@ -30,14 +36,21 @@ jobs:
       - run:
           name: List 1Password Vaults
           command: |
-            # Assuming GCP_SERVICE_ACCOUNT_KEY contains the service account key
-            #GCP_SERVICE_ACCOUNT_KEY=$(op document get gcp_auth --vault="GCP_AUTH_VAULT" )
-            #echo "export GCP_SERVICE_ACCOUNT_KEY='$GCP_SERVICE_ACCOUNT_KEY'" >> $BASH_ENV
-            op document get "gcp_auth" --out-file secret-plans.text --vault GCP_AUTH_VAULT
 
+            GCP_SERVICE_ACCOUNT_KEY=$(op document get "gcp_auth" --out-file secret-plans.text --vault GCP_AUTH_VAULT)
+          
+            echo $GCP_SERVICE_ACCOUNT_KEY > /tmp/service-account.json
+            echo 'export GOOGLE_APPLICATION_CREDENTIALS=/tmp/service-account.json' >> $BASH_ENV
             
-            op vault ls 
-
+       - run:
+          name: Authenticate with Google Cloud
+          command: |
+             gcloud auth activate-service-account --key-file=/tmp/service-account.json
+             gcloud auth list
+      - run:
+          name: Build with Maven
+          command: mvn clean install
+            
 workflows:
   version: 2
   build:
