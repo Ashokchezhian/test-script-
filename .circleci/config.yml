@@ -2,8 +2,8 @@ version: 2.1
 
 jobs:
   list-1password-vaults:
-    docker:
-      - image: alpine:latest
+    docker:  
+      - image: circleci/openjdk:11-jdk
     steps:
       - checkout
       - run:
@@ -31,9 +31,9 @@ jobs:
       - run:
           name: Install GCP sdk
           command: | 
-              echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" |  tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-              curl https://packages.cloud.google.com/apt/doc/apt-key.gpg |  apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-              apt-get update &&  apt-get install google-cloud-sdk
+              echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+              curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+              sudo apt-get update && sudo apt-get install google-cloud-sdk
 
       - run:
           name: List 1Password Vaults
