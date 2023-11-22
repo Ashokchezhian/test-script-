@@ -26,7 +26,7 @@ jobs:
       - run:
           name: list the user
           command: | 
-            op user get --me 
+            #op user get --me 
       - run:
           name: List 1Password Vaults
           command: |
