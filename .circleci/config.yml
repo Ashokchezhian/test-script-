@@ -7,11 +7,11 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Install Google Cloud SDK
-        command: |
-          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-          sudo apt-get update && sudo apt-get install google-cloud-sdk
+          name: Install Google Cloud SDK
+          command: |
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+            sudo apt-get update && sudo apt-get install google-cloud-sdk
       - run:
           name: Add 1Password CLI Repository
           command: |
@@ -41,7 +41,7 @@ jobs:
           
             echo $GCP_SERVICE_ACCOUNT_KEY > /tmp/service-account.json
             echo 'export GOOGLE_APPLICATION_CREDENTIALS=/tmp/service-account.json' >> $BASH_ENV
-            
+
        - run:
           name: Authenticate with Google Cloud
           command: |
