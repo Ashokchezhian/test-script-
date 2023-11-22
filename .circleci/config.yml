@@ -31,11 +31,10 @@ jobs:
           name: List 1Password Vaults
           command: |
             # Assuming GCP_SERVICE_ACCOUNT_KEY contains the service account key
-            GCP_SERVICE_ACCOUNT_KEY=
-             GCP_SERVICE_ACCOUNT_KEY=$(op document get gcp_auth --vault="GCP_AUTH_VAULT" )
-            echo "export GCP_SERVICE_ACCOUNT_KEY='$GCP_SERVICE_ACCOUNT_KEY'" >> $BASH_ENV
-            
-            op document get
+            #GCP_SERVICE_ACCOUNT_KEY=$(op document get gcp_auth --vault="GCP_AUTH_VAULT" )
+            #echo "export GCP_SERVICE_ACCOUNT_KEY='$GCP_SERVICE_ACCOUNT_KEY'" >> $BASH_ENV
+            op document get "gcp_auth" --out-file secret-plans.text
+
             
             op vault ls 
 
