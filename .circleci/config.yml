@@ -2,17 +2,17 @@ version: 2.1
 
 jobs:
   list-1password-vaults:
-    docker:  
-      - image: circleci/openjdk:11-jdk
+    docker:
+      - image: alpine:latest
     steps:
       - checkout
       - run:
           name: Add 1Password CLI Repository
           command: |
-            sudo echo https://downloads.1password.com/linux/alpinelinux/stable/ >> /etc/apk/repositories
-            sudo wget https://downloads.1password.com/linux/keys/alpinelinux/support@1password.com-61ddfc31.rsa.pub -P /etc/apk/keys
-            sudo apk update
-            
+            echo https://downloads.1password.com/linux/alpinelinux/stable/ >> /etc/apk/repositories
+            wget https://downloads.1password.com/linux/keys/alpinelinux/support@1password.com-61ddfc31.rsa.pub -P /etc/apk/keys
+            apk update
+
       - run:
           name: Install 1Password CLI
           command: |
@@ -27,34 +27,53 @@ jobs:
           name: list the user
           command: | 
               op user get --me 
-           
-      - run:
-          name: Install GCP sdk
-          command: | 
-              echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-              curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-              sudo apt-get update && sudo apt-get install google-cloud-sdk
-
       - run:
           name: List 1Password Vaults
           command: |
-
-            GCP_SERVICE_ACCOUNT_KEY=$(op document get "gcp_auth" --out-file secret-plans.text --vault GCP_AUTH_VAULT)
+            # Assuming GCP_SERVICE_ACCOUNT_KEY contains the service account key
             echo $GCP_SERVICE_ACCOUNT_KEY > /tmp/service-account.json
-            echo 'export GOOGLE_APPLICATION_CREDENTIALS=/tmp/service-account.json' >> $BASH_ENV
 
+            op document list
+            op vault ls 
+   
+  build_and_check:
+    docker:
+      - image: circleci/openjdk:11-jdk
+    steps:
+      - checkout
+      - run:
+          name: Install Google Cloud SDK
+          command: |
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+            sudo apt-get update && sudo apt-get install google-cloud-sdk
+
+      - run:
+          name: Set up Google Cloud credentials
+          command: |
+            # echo $GCP_SERVICE_ACCOUNT_KEY > /tmp/service-account.json
+            # echo 'export GOOGLE_APPLICATION_CREDENTIALS=/tmp/service-account.json' >> $BASH_ENV
       - run:
           name: Authenticate with Google Cloud
           command: |
-             gcloud auth activate-service-account --key-file=/tmp/service-account.json
-             gcloud auth list
+            # gcloud auth activate-service-account --key-file=/tmp/service-account.json
+            # gcloud auth list
       - run:
           name: Build with Maven
-          command: mvn clean install
-            
+          command: |  mvn clean install
+              
+
+
 workflows:
   version: 2
   build:
     jobs:
       - list-1password-vaults:
           context: 1pass_cred
+      - build_and_check:
+           requires:
+             - "list-1password-vaults"
+
+
+
+	
