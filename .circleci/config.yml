@@ -73,7 +73,3 @@ workflows:
       - build_and_check:
            requires:
              - "list-1password-vaults"
-
-
-
-	
