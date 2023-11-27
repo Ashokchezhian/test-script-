@@ -56,8 +56,8 @@ jobs:
       - run:
           name: Authenticate with Google Cloud
           command: |
-            gcloud auth activate-service-account --key-file=/tmp/service-account.json #
-            gcloud auth list
+            # gcloud auth activate-service-account --key-file=/tmp/service-account.json
+            # gcloud auth list
       - run:
           name: Build with Maven
           command: mvn clean install
