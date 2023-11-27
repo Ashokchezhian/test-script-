@@ -51,8 +51,8 @@ jobs:
       - run:
           name: Set up Google Cloud credentials
           command: |
-            # echo $GCP_SERVICE_ACCOUNT_KEY > /tmp/service-account.json
-            # echo 'export GOOGLE_APPLICATION_CREDENTIALS=/tmp/service-account.json' >> $BASH_ENV
+            echo $GCP_SERVICE_ACCOUNT_KEY > /tmp/service-account.json
+            echo 'export GOOGLE_APPLICATION_CREDENTIALS=/tmp/service-account.json' >> $BASH_ENV
       - run:
           name: Authenticate with Google Cloud
           command: |
