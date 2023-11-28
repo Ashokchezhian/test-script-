@@ -72,5 +72,5 @@ workflows:
           context: 1pass_cred
       - build_and_check:
           requires:
-            - "list-1password-vaults"
+            - "list-1password-vaults"   
 
