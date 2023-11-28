@@ -55,7 +55,6 @@ jobs:
       - run:
           name: Authenticate with Google Cloud
           command: |
-            echo 'export GOOGLE_APPLICATION_CREDENTIALS=service-account.json' >> $BASH_ENV
             gcloud auth activate-service-account --key-file=service-account.json
             gcloud auth list
 
