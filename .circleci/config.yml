@@ -24,46 +24,45 @@ jobs:
               export OP_SERVICE_ACCOUNT_TOKEN=$OP_SERVICE_ACCOUNT_TOKEN
 
       - run:
-          name: list the user
+          name: List the user
           command: | 
               op user get --me 
       - run:
           name: List 1Password Vaults
           command: |
-            # Assuming GCP_SERVICE_ACCOUNT_KEY contains the service account key
-            echo $GCP_SERVICE_ACCOUNT_KEY > /tmp/service-account.json
+            GCP_SERVICE_ACCOUNT_KEY=$(op document get "gcp_auth" --out-file secret-plans.text --vault GCP_AUTH_VAULT)
+            echo $GCP_SERVICE_ACCOUNT_KEY > service-account.json
+            echo 'export GOOGLE_APPLICATION_CREDENTIALS=service-account.json' >> $BASH_ENV
+            cat /root/project/secret-plans.text > service-account.json
+      - persist_to_workspace:
+          root: .
+          paths:
+            - service-account.json
 
-            op document list
-            op vault ls 
-   
   build_and_check:
     docker:
       - image: circleci/openjdk:11-jdk
     steps:
       - checkout
+      - attach_workspace:
+          at: .
       - run:
           name: Install Google Cloud SDK
           command: |
             echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
             curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
             sudo apt-get update && sudo apt-get install google-cloud-sdk
-
-      - run:
-          name: Set up Google Cloud credentials
-          command: |
-            echo $GCP_SERVICE_ACCOUNT_KEY > /tmp/service-account.json
-            echo 'export GOOGLE_APPLICATION_CREDENTIALS=/tmp/service-account.json' >> $BASH_ENV
       - run:
           name: Authenticate with Google Cloud
           command: |
-            gcloud auth activate-service-account --key-file=/tmp/service-account.json
+            gcloud auth activate-service-account --key-file=service-account.json
             gcloud auth list
+
       - run:
           name: Build with Maven
-          command: mvn clean install
+          command: |
+              mvn clean install
               
-
-
 workflows:
   version: 2
   build:
@@ -71,5 +70,5 @@ workflows:
       - list-1password-vaults:
           context: 1pass_cred
       - build_and_check:
-           requires:
-             - "list-1password-vaults"
+          requires:
+            - "list-1password-vaults"
