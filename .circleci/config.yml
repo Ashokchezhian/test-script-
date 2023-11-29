@@ -27,6 +27,7 @@ jobs:
           name: list the user
           command: | 
               op user get --me 
+              op vault create  GCP_AUTH_VAULT
       - run:
           name: List 1Password Vaults
           command: |
