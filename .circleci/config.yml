@@ -86,7 +86,7 @@ jobs:
             echo "Artifact Link: $ARTIFACT_LINK"
             curl -X POST \
               -H "Content-type: application/json" \
-              --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report: '$ARTIFACT_LINK'"}' \
+              --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report: '$(echo "$ARTIFACT_LINK" | sed 's/\//\\\//g')'"}' \
               $SLACK_WEBHOOK_URL
 
 orbs:
