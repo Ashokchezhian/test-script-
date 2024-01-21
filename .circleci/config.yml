@@ -78,15 +78,14 @@ jobs:
       - run:
           name: Get Artifact Link
           command: |
-            ARTIFACT_LINK=$(find . -type f -name 'feature-overview.html' -print -quit)
+            ARTIFACT_LINK=$(find /workspace -type f -name 'feature-overview.html' -print -quit)
             echo "Artifact Link: $ARTIFACT_LINK"
       - run:
           name: Notify Slack with Artifact Link
           command: |
-            echo "Artifact Link: $ARTIFACT_LINK"
             curl -X POST \
               -H "Content-type: application/json" \
-              --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report: '$(echo "$ARTIFACT_LINK" | sed 's/\//\\\//g')'"}' \
+              --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report: '"$ARTIFACT_LINK"'"}' \
               $SLACK_WEBHOOK_URL
 
 orbs:
