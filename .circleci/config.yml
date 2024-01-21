@@ -12,21 +12,18 @@ jobs:
             echo https://downloads.1password.com/linux/alpinelinux/stable/ >> /etc/apk/repositories
             wget https://downloads.1password.com/linux/keys/alpinelinux/support@1password.com-61ddfc31.rsa.pub -P /etc/apk/keys
             apk update
-
       - run:
           name: Install 1Password CLI
           command: |
             apk add 1password-cli
-
       - run:
           name: Authenticate with 1Password
           command: |
-              export OP_SERVICE_ACCOUNT_TOKEN=$OP_SERVICE_ACCOUNT_TOKEN
-
+            export OP_SERVICE_ACCOUNT_TOKEN=$OP_SERVICE_ACCOUNT_TOKEN
       - run:
           name: List the user
           command: | 
-              op user get --me 
+            op user get --me 
       - run:
           name: List 1Password Vaults
           command: |
@@ -60,19 +57,38 @@ jobs:
             gcloud auth activate-service-account --key-file=service-account.json
             gcloud auth list
             cat $BASH_ENV
-            
       - run:
           name: Build with Maven
           command: |
-              mvn clean install
-              ls -ltrh target
-              cd target
-              pwd
-              ls -ltrh
-
+            mvn clean install
+            ls -ltrh target
+            cd target
+            pwd
+            ls -ltrh
       - store_artifacts:
-          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
-              
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
+          destination: artifacts
+
+  notify-slack:
+    docker:
+      - image: cimg/base:2020.01
+    steps:
+      - run:
+          name: Get Artifact Link
+          command: |
+            ARTIFACT_LINK=$(find /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports -type f -name 'feature-overview.html' -print -quit)
+            echo "Artifact Link: $ARTIFACT_LINK"
+      - run:
+          name: Notify Slack with Artifact Link
+          command: |
+            curl -X POST \
+              -H "Content-type: application/json" \
+              --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report: '$ARTIFACT_LINK'"}' \
+              $SLACK_WEBHOOK_URL
+
+orbs:
+  slack: circleci/slack@4.9.3
+
 workflows:
   version: 2
   build:
@@ -81,5 +97,7 @@ workflows:
           context: 1pass_cred
       - build_and_check:
           requires:
-            - "list-1password-vaults"
-
+            - list-1password-vaults
+      - notify-slack:
+          requires:
+            - build_and_check
