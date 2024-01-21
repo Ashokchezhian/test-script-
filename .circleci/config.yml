@@ -83,10 +83,11 @@ jobs:
       - run:
           name: Notify Slack with Artifact Link
           command: |
+            echo "Artifact Link: $ARTIFACT_LINK"
             curl -X POST \
               -H "Content-type: application/json" \
               --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report: '$ARTIFACT_LINK'"}' \
-              "$SLACK_WEBHOOK_URL"
+              $SLACK_WEBHOOK_URL
 
 orbs:
   slack: circleci/slack@4.9.3
