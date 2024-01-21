@@ -71,6 +71,18 @@ jobs:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
           destination: artifacts
 
+  check_application:
+    docker:
+      - image: circleci/openjdk:11-jdk
+    steps:
+      - checkout
+      - run:
+          name: Run Application Tests
+          command: |
+            cd test-script-
+            # Replace the URL with your actual application URL
+            ./run_tests.sh https://appadminqa.pippintitle.com
+
   notify-slack:
     docker:
       - image: cimg/base:2020.01
@@ -78,14 +90,14 @@ jobs:
       - run:
           name: Get Artifact Link
           command: |
-            ARTIFACT_LINK=$(find /workspace -type f -name 'feature-overview.html' -print -quit)
+            ARTIFACT_LINK=$(find . -type f -name 'feature-overview.html' -print -quit)
             echo "Artifact Link: $ARTIFACT_LINK"
       - run:
           name: Notify Slack with Artifact Link
           command: |
             curl -X POST \
               -H "Content-type: application/json" \
-              --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report: '"$ARTIFACT_LINK"'"}' \
+              --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report: '$ARTIFACT_LINK'"}' \
               $SLACK_WEBHOOK_URL
 
 orbs:
@@ -100,6 +112,9 @@ workflows:
       - build_and_check:
           requires:
             - list-1password-vaults
+      - check_application:
+          requires:
+            - build_and_check
       - notify-slack:
           requires:
             - build_and_check
