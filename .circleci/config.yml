@@ -60,13 +60,15 @@ jobs:
       - run:
           name: Build with Maven
           command: |
+            git clone https://github.com/Ashokchezhian/test-script-.git
+            cd test-script-
             mvn clean install
             ls -ltrh target
             cd target
             pwd
             ls -ltrh
       - store_artifacts:
-          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
+          path: /home/circleci/project/test-script-/target/
           destination: artifacts
 
   notify-slack:
@@ -76,7 +78,7 @@ jobs:
       - run:
           name: Get Artifact Link
           command: |
-            ARTIFACT_LINK=$(find /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports -type f -name 'feature-overview.html' -print -quit)
+            ARTIFACT_LINK=$(find . -type f -name 'feature-overview.html' -print -quit)
             echo "Artifact Link: $ARTIFACT_LINK"
       - run:
           name: Notify Slack with Artifact Link
