@@ -64,7 +64,7 @@ jobs:
       - run:
           name: Build with Maven
           command: |
-              mvn clean install
+              mvn clean install -Durl=https://appadminqa.pippintitle.com
               ls -ltrh target
               cd target
               pwd
@@ -73,39 +73,7 @@ jobs:
       - store_artifacts:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
 
-  check_application:
-    docker:
-      - image: circleci/openjdk:11-jdk
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Install Google Cloud SDK
-          command: |
-            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-            sudo apt-get update && sudo apt-get install google-cloud-sdk
-      - run:
-          name: Authenticate with Google Cloud
-          command: |
-            file_path=`pwd`
-            echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
-            gcloud auth activate-service-account --key-file=service-account.json
-            gcloud auth list
-            cat $BASH_ENV
-      - run:
-          name: Run Application Tests
-          command: |
-            # Replace the URL with your application URL
-            mvn clean install -Durl=https://appadminqa.pippintitle.com
-            ls -ltrh target
-            cd target
-            pwd
-            ls -ltrh
-      - store_artifacts:
-          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
-          destination: artifacts
+  
 
   notify-slack:
     docker:
@@ -139,4 +107,4 @@ workflows:
             - build_and_check
       - notify-slack:
           requires:
-            - check_application
+            - build_and_check
