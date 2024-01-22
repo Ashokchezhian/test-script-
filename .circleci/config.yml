@@ -117,4 +117,4 @@ workflows:
             - build_and_check
       - notify-slack:
           requires:
-            - build_and_check
+            - check_application
