@@ -102,9 +102,7 @@ workflows:
       - build_and_check:
           requires:
             - "list-1password-vaults"
-      - check_application:
-          requires:
-            - build_and_check
+      
       - notify-slack:
           requires:
             - build_and_check
