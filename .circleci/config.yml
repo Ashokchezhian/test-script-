@@ -105,7 +105,7 @@ jobs:
             ls -ltrh
       - store_artifacts:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
-		  destination: artifacts			
+		      destination: artifacts			
 
   notify-slack:
     docker:
