@@ -71,8 +71,7 @@ jobs:
               ls -ltrh
 
       - store_artifacts:
-          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
-          destination: artifacts
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
 
   check_application:
     docker:
@@ -105,8 +104,7 @@ jobs:
             pwd
             ls -ltrh
       - store_artifacts:
-          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
-          destination: artifacts
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
 
   notify-slack:
     docker:
@@ -132,4 +130,11 @@ workflows:
       - list-1password-vaults:
           context: 1pass_cred
       - build_and_check:
-         
+          requires:
+            - "list-1password-vaults"
+      - check_application:
+          requires:
+            - build_and_check
+      - notify-slack:
+          requires:
+            - check_application
