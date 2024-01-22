@@ -69,17 +69,6 @@ jobs:
               cd target
               pwd
               ls -ltrh
-
-      - store_artifacts:
-          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
-
-  check_application:
-    docker:
-      - image: circleci/openjdk:11-jdk
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
       - run:
           name: Install Google Cloud SDK
           command: |
@@ -99,7 +88,10 @@ jobs:
           command: |
             # Replace the URL with your application URL
             mvn clean install -Durl=https://appadminqa.pippintitle.com
+      - store_artifacts:
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
 
+  
   notify-slack:
     docker:
       - image: cimg/base:2020.01
