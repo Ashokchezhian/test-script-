@@ -84,7 +84,7 @@ jobs:
           name: Run Application Tests
           command: |
             # Replace the URL with your application URL
-            mvn test -Durl=https://appadminqa.pippintitle.com
+            mvn clean install -Durl=https://appadminqa.pippintitle.com
 
   notify-slack:
     docker:
