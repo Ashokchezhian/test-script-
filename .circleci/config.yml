@@ -105,7 +105,7 @@ jobs:
             ls -ltrh
       - store_artifacts:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
-		      destination: artifacts			
+          destination: artifacts
 
   notify-slack:
     docker:
@@ -124,8 +124,6 @@ jobs:
               --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report: '$ARTIFACT_LINK'"}' \
               "$SLACK_WEBHOOK_URL"
 
-	 
-							 
 
 workflows:
   version: 2
