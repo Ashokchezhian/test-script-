@@ -12,18 +12,21 @@ jobs:
             echo https://downloads.1password.com/linux/alpinelinux/stable/ >> /etc/apk/repositories
             wget https://downloads.1password.com/linux/keys/alpinelinux/support@1password.com-61ddfc31.rsa.pub -P /etc/apk/keys
             apk update
+
       - run:
           name: Install 1Password CLI
           command: |
             apk add 1password-cli
+
       - run:
           name: Authenticate with 1Password
           command: |
-            export OP_SERVICE_ACCOUNT_TOKEN=$OP_SERVICE_ACCOUNT_TOKEN
+              export OP_SERVICE_ACCOUNT_TOKEN=$OP_SERVICE_ACCOUNT_TOKEN
+
       - run:
           name: List the user
           command: | 
-            op user get --me 
+              op user get --me 
       - run:
           name: List 1Password Vaults
           command: |
@@ -57,31 +60,31 @@ jobs:
             gcloud auth activate-service-account --key-file=service-account.json
             gcloud auth list
             cat $BASH_ENV
+            
       - run:
           name: Build with Maven
           command: |
-            git clone https://github.com/Ashokchezhian/test-script-.git
-            cd test-script-
-            mvn clean install
-            ls -ltrh target
-            cd target
-            pwd
-            ls -ltrh
+              mvn clean install
+              ls -ltrh target
+              cd target
+              pwd
+              ls -ltrh
+
       - store_artifacts:
-          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
-          destination: artifacts
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
 
   check_application:
     docker:
       - image: circleci/openjdk:11-jdk
     steps:
       - checkout
+      - attach_workspace:
+          at: .
       - run:
           name: Run Application Tests
           command: |
-            cd test-script-
-            # Replace the URL with your actual application URL
-            ./run_tests.sh https://appadminqa.pippintitle.com
+            # Replace the URL with your application URL
+            mvn test -Durl=https://appadminqa.pippintitle.com
 
   notify-slack:
     docker:
@@ -98,10 +101,7 @@ jobs:
             curl -X POST \
               -H "Content-type: application/json" \
               --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report: '$ARTIFACT_LINK'"}' \
-              $SLACK_WEBHOOK_URL
-
-orbs:
-  slack: circleci/slack@4.9.3
+              "$SLACK_WEBHOOK_URL"
 
 workflows:
   version: 2
@@ -111,7 +111,7 @@ workflows:
           context: 1pass_cred
       - build_and_check:
           requires:
-            - list-1password-vaults
+            - "list-1password-vaults"
       - check_application:
           requires:
             - build_and_check
