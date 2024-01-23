@@ -66,8 +66,7 @@ jobs:
             pwd
             ls -ltrh
       - store_artifacts:
-          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
-          destination: artifacts
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
 
   check_application:
     docker:
@@ -93,13 +92,14 @@ jobs:
       - run:
           name: Run Application Tests
           command: |
+            # Replace the URL with your application URL
             mvn clean install -Durl=https://appadminqa.pippintitle.com
             ls -ltrh target
             cd target
             pwd
             ls -ltrh
       - store_artifacts:
-          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
           destination: artifacts
 
   notify-slack:
@@ -116,4 +116,21 @@ jobs:
           command: |
             curl -X POST \
               -H "Content-type: application/json" \
-              --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report:
+              --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report: '$ARTIFACT_LINK'"}' \
+              "$SLACK_WEBHOOK_URL"
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - list-1password-vaults:
+          context: 1pass_cred
+      - build_and_check:
+          requires:
+            - "list-1password-vaults"
+      - check_application:
+          requires:
+            - build_and_check
+      - notify-slack:
+          requires:
+            - check_application
