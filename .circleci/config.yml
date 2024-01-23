@@ -93,7 +93,6 @@ jobs:
           name: Run Application Tests
           command: |
             # Replace the URL with your application URL
-            cd . .
             mvn clean install -Durl=https://appadminqa.pippintitle.com
             ls -ltrh target
             cd target
