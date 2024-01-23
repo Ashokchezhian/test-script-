@@ -94,9 +94,10 @@ jobs:
           name: Run Application Tests
           command: |
             # Replace the URL with your application URL
+            git clone https://github.com/Ashokchezhian/test-script-.git
+            cd test-script-
             mvn clean install -Durl=https://appadminqa.pippintitle.com
             ls -ltrh target
-            cd target
             pwd
             ls -ltrh
 
