@@ -91,9 +91,20 @@ jobs:
             gcloud auth list
             cat $BASH_ENV
       - run:
-          name: Run Application Tests
+          name: Test Application URL
           command: |
             # Replace the URL with your application URL
+            APPLICATION_URL=https://appadminqa.pippintitle.com
+            RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" $APPLICATION_URL)
+            if [ $RESPONSE_CODE -eq 200 ]; then
+              echo "Application URL test succeeded. Response code: $RESPONSE_CODE"
+            else
+              echo "Application URL test failed. Response code: $RESPONSE_CODE"
+              exit 1
+            fi
+      - run:
+          name: Run Application Tests
+          command: |
             git clone https://github.com/Ashokchezhian/test-script-.git
             cd test-script-
             mvn clean install -Durl=https://appadminqa.pippintitle.com
