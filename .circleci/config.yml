@@ -70,58 +70,56 @@ jobs:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
 
   check_application:
-  docker:
-    - image: circleci/openjdk:11-jdk
-  steps:
-    - checkout
-    - attach_workspace:
-        at: .
-    - run:
-        name: Print Environment Variables
-        command: |
-          printenv
-    - run:
-        name: Install Google Cloud SDK
-        command: |
-          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-          sudo apt-get update && sudo apt-get install google-cloud-sdk
-    - run:
-        name: Authenticate with Google Cloud
-        command: |
-          file_path=`pwd`
-          echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
-          gcloud auth activate-service-account --key-file=service-account.json
-          gcloud auth list
-          cat $BASH_ENV
-    - run:
-        name: Test Application URL
-        command: |
-          # Replace the URL with your application URL
-          APPLICATION_URL=https://appadminqa.pippintitle.com
-          echo "Testing Application URL: $APPLICATION_URL"
-          RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" $APPLICATION_URL)
-          echo "Response code: $RESPONSE_CODE"
-          if [ $RESPONSE_CODE -eq 200 ]; then
-            echo "Application URL test succeeded. Response code: $RESPONSE_CODE"
-          else
-            echo "Application URL test failed. Response code: $RESPONSE_CODE"
-            exit 1
-          fi
-    - run:
-        name: Run Application Tests
-        command: |
-          git clone https://github.com/Ashokchezhian/test-script-.git
-          cd test-script-
-          mvn clean install -Durl=https://appadminqa.pippintitle.com
-          ls -ltrh target
-          pwd
-          ls -ltrh
+    docker:
+      - image: circleci/openjdk:11-jdk
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Print Environment Variables
+          command: |
+            printenv
+      - run:
+          name: Install Google Cloud SDK
+          command: |
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+            sudo apt-get update && sudo apt-get install google-cloud-sdk
+      - run:
+          name: Authenticate with Google Cloud
+          command: |
+            file_path=`pwd`
+            echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
+            gcloud auth activate-service-account --key-file=service-account.json
+            gcloud auth list
+            cat $BASH_ENV
+      - run:
+          name: Test Application URL
+          command: |
+            APPLICATION_URL=https://appadminqa.pippintitle.com
+            echo "Testing Application URL: $APPLICATION_URL"
+            RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" $APPLICATION_URL)
+            echo "Response code: $RESPONSE_CODE"
+            if [ $RESPONSE_CODE -eq 200 ]; then
+              echo "Application URL test succeeded. Response code: $RESPONSE_CODE"
+            else
+              echo "Application URL test failed. Response code: $RESPONSE_CODE"
+              exit 1
+            fi
+      - run:
+          name: Run Application Tests
+          command: |
+            git clone https://github.com/Ashokchezhian/test-script-.git
+            cd test-script-
+            mvn clean install -Durl=https://appadminqa.pippintitle.com
+            ls -ltrh target
+            pwd
+            ls -ltrh
 
-    - store_artifacts:
-        path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
-        destination: artifacts
-
+      - store_artifacts:
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
+          destination: artifacts
 
   notify-slack:
     docker:
@@ -132,7 +130,7 @@ jobs:
           command: |
             ARTIFACT_LINK="https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_ID}/artifacts/0/artifacts/file-Features-AbstractorCreation-feature.html"
             echo "Artifact Link: $ARTIFACT_LINK"
-      
+  
 workflows:
   version: 2
   build:
