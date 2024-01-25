@@ -90,6 +90,47 @@ jobs:
               exit 1
             fi
       - run:
+          name: Download CSS from Google Cloud Storage
+          command: |
+            BUCKET_NAME=your-gcp-bucket-name
+            FILE_PATH=automation-css/cucumber-report-html (6).zip
+
+            gcloud auth activate-service-account --key-file=service-account.json
+
+            gsutil cp gs://$automation-css/$automation-css/cucumber-report-html (6).zip .
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - application-url-test-results.txt
+            - cucumber-report-html (6).zip
+
+  check_application:
+    docker:
+      - image: circleci/openjdk:11-jdk
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Print Environment Variables
+          command: |
+            printenv
+      - run:
+          name: Install Google Cloud SDK
+          command: |
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+            sudo apt-get update && sudo apt-get install google-cloud-sdk
+      - run:
+          name: Authenticate with Google Cloud
+          command: |
+            file_path=`pwd`
+            echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
+            gcloud auth activate-service-account --key-file=service-account.json
+            gcloud auth list
+            cat $BASH_ENV
+      - run:
           name: Run Application Tests
           command: |
             git clone https://github.com/Ashokchezhian/test-script-.git
@@ -103,6 +144,15 @@ jobs:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
           destination: artifacts
 
+  notify-slack:
+    docker:
+      - image: cimg/base:2020.01
+    steps:
+      - run:
+          name: Get Artifact Link
+          command: |
+            ARTIFACT_LINK="https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_ID}/artifacts/0/artifacts/file-Features-AbstractorCreation-feature.html"
+            echo "Artifact Link: $ARTIFACT_LINK"
   
 workflows:
   version: 2
@@ -116,6 +166,9 @@ workflows:
       - check_application_url:
           requires:
             - build_and_check
-      - notify-slack:
+      - check_application:
           requires:
             - check_application_url
+      - notify-slack:
+          requires:
+            - check_application
