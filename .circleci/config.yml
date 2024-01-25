@@ -81,10 +81,11 @@ jobs:
           name: Upload Test Results CSS to GCS
           command: |
             if [ -f /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/style.css ]; then
-              gsutil cp /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/style.css gs://automation-css/automation-css/cucumber-report-html (6).zip/
+              gsutil cp /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/style.css "gs://automation-css/automation-css/cucumber-report-html (6).zip/"
             else
               echo "style.css does not exist. Skipping upload."
             fi
+
 
       - store_artifacts:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
