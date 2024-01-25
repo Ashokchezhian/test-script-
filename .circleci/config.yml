@@ -97,10 +97,6 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run:
-          name: Print Cloned Repository Contents
-          command: |
-            ls -R /home/circleci/project/test-script-/
 
       - run:
           name: Install Google Cloud SDK
