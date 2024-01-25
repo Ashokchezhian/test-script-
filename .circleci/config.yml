@@ -52,7 +52,7 @@ jobs:
       - run:
           name: Authenticate with Google Cloud
           command: |
-            file_path=`pwd`
+            file_path=$(pwd)
             echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
             gcloud auth activate-service-account --key-file=service-account.json
             gcloud auth list
@@ -60,14 +60,27 @@ jobs:
       - run:
           name: Build with Maven
           command: |
+            git clone https://github.com/Ashokchezhian/test-script-.git
+            cd test-script-
             mvn clean install
             ls -ltrh target
             cd target
             pwd
             ls -ltrh
 
+      - run:
+          name: Check style.css existence
+          command: |
+            ls /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/style.css
+
+      - run:
+          name: Upload Test Results CSS to GCS
+          command: |
+            gsutil cp /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/style.css gs://automation-css/automation-css/cucumber-report-html (6).zip/style.css
+
       - store_artifacts:
-          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
+          destination: artifacts
 
   check_application:
     docker:
@@ -89,7 +102,7 @@ jobs:
       - run:
           name: Authenticate with Google Cloud
           command: |
-            file_path=`pwd`
+            file_path=$(pwd)
             echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
             gcloud auth activate-service-account --key-file=service-account.json
             gcloud auth list
@@ -108,11 +121,6 @@ jobs:
               exit 1
             fi
       - run:
-          name: Upload Test Results CSS to GCS
-          command: |
-            gsutil cp /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/style.css gs://your-gcs-bucket/path/to/destination/
-
-      - run:
           name: Run Application Tests
           command: |
             git clone https://github.com/Ashokchezhian/test-script-.git
@@ -123,7 +131,7 @@ jobs:
             ls -ltrh
 
       - store_artifacts:
-          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
           destination: artifacts
 
   notify-slack:
