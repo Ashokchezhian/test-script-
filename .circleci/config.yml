@@ -97,17 +97,18 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      
       - run:
-          name: Print Environment Variables
+          name: Print Cloned Repository Contents
           command: |
-            printenv
+            ls -R /home/circleci/project/test-script-/
+
       - run:
           name: Install Google Cloud SDK
           command: |
             echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
             curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
             sudo apt-get update && sudo apt-get install google-cloud-sdk
+
       - run:
           name: Authenticate with Google Cloud
           command: |
@@ -137,20 +138,23 @@ jobs:
               echo "Application URL test failed. Response code: $RESPONSE_CODE"
               exit 1
             fi
+
       - run:
           name: Run Application Tests
           command: |
-            git clone https://github.com/Ashokchezhian/test-script-.git
-            cd test-script-
+            cd /home/circleci/project/test-script-/
+            
             # Loop over test scenarios
             for scenario in $(ls src/test/resources/features); do
               echo "Running scenario: $scenario"
               mvn clean install -Durl=https://appadminqa.pippintitle.com -Dcucumber.options="--tags @$scenario"
             done
+
             ls -ltrh target
             pwd
-            ls -ltrh
-
+            ls -R /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/
+            ls -ltrh /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/
+            
       - store_artifacts:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
           destination: artifacts
