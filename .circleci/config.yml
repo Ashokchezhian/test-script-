@@ -116,6 +116,14 @@ jobs:
             gcloud auth activate-service-account --key-file=service-account.json
             gcloud auth list
             cat $BASH_ENV
+            
+      - run:
+         name: Check Network Access
+         command: |
+          # Replace 'https://appadminqa.pippintitle.com' with your actual application URL
+           APPLICATION_URL=https://appadminqa.pippintitle.com
+           curl -v $APPLICATION_URL
+
       - run:
           name: Test Application URL
           command: |
