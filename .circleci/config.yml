@@ -97,11 +97,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run:
-          name: Print Cloned Repository Contents
-          command: |
-            cd $CIRCLE_WORKING_DIRECTORY\test-script-\target\cucumber-report-html\cucumber-html-reports\feature-overview.html
-            ls -R
+      
       - run:
           name: Print Environment Variables
           command: |
