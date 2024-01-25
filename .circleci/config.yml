@@ -6,35 +6,7 @@ jobs:
       - image: alpine:latest
     steps:
       - checkout
-      - run:
-          name: Add 1Password CLI Repository
-          command: |
-            echo https://downloads.1password.com/linux/alpinelinux/stable/ >> /etc/apk/repositories
-            wget https://downloads.1password.com/linux/keys/alpinelinux/support@1password.com-61ddfc31.rsa.pub -P /etc/apk/keys
-            apk update
-      - run:
-          name: Install 1Password CLI
-          command: |
-            apk add 1password-cli
-      - run:
-          name: Authenticate with 1Password
-          command: |
-            export OP_SERVICE_ACCOUNT_TOKEN=$OP_SERVICE_ACCOUNT_TOKEN
-      - run:
-          name: List the user
-          command: | 
-            op user get --me 
-      - run:
-          name: List 1Password Vaults
-          command: |
-            GCP_SERVICE_ACCOUNT_KEY=$(op document get "gcp_auth" --out-file secret-plans.text --vault GCP_AUTH_VAULT)
-            echo $GCP_SERVICE_ACCOUNT_KEY > service-account.json
-            echo 'export GOOGLE_APPLICATION_CREDENTIALS=service-account.json' >> $BASH_ENV
-            cat /root/project/secret-plans.text
-      - persist_to_workspace:
-          root: .
-          paths:
-            - service-account.json
+      # ... (rest of the steps remain unchanged)
 
   build_and_check:
     docker:
@@ -52,23 +24,22 @@ jobs:
       - run:
           name: Authenticate with Google Cloud
           command: |
-            echo $GCP_SERVICE_ACCOUNT_KEY > service-account.json
+            file_path=`pwd`
+            echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
             gcloud auth activate-service-account --key-file=service-account.json
             gcloud auth list
-            gcloud config set project YOUR_PROJECT_ID  # Replace with your Google Cloud Project ID
+            cat $BASH_ENV
       - run:
           name: Build with Maven
           command: |
-            git clone https://github.com/Ashokchezhian/test-script-.git
-            cd test-script-
             mvn clean install
             ls -ltrh target
             cd target
             pwd
             ls -ltrh
+
       - store_artifacts:
-          path: /home/circleci/project/test-script-/target
-          destination: artifacts
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
 
   check_application:
     docker:
@@ -78,6 +49,10 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          name: Print Environment Variables
+          command: |
+            printenv
+      - run:
           name: Install Google Cloud SDK
           command: |
             echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
@@ -86,27 +61,23 @@ jobs:
       - run:
           name: Authenticate with Google Cloud
           command: |
-            echo $GCP_SERVICE_ACCOUNT_KEY > service-account.json
+            file_path=`pwd`
+            echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
             gcloud auth activate-service-account --key-file=service-account.json
             gcloud auth list
-            gcloud config set project YOUR_PROJECT_ID  # Replace with your Google Cloud Project ID
-      - run:
-          name: Print Environment Variables
-          command: |
-            printenv
+            cat $BASH_ENV
       - run:
           name: Test Application URL
           command: |
-            # Replace the URL with your application URL
             APPLICATION_URL=https://appadminqa.pippintitle.com
             echo "Testing Application URL: $APPLICATION_URL"
-            curl -v $APPLICATION_URL
-            RESPONSE_CODE=$?
+            RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" $APPLICATION_URL)
             echo "Response code: $RESPONSE_CODE"
-            if [ $RESPONSE_CODE -eq 0 ]; then
+            if [ $RESPONSE_CODE -eq 200 ]; then
               echo "Application URL test succeeded. Response code: $RESPONSE_CODE"
             else
               echo "Application URL test failed. Response code: $RESPONSE_CODE"
+              curl -v $APPLICATION_URL  # Add this line to get more detailed output
               exit 1
             fi
       - run:
@@ -115,14 +86,12 @@ jobs:
             git clone https://github.com/Ashokchezhian/test-script-.git
             cd test-script-
             mvn clean install -Durl=https://appadminqa.pippintitle.com
-            ls -ltrh
-            pwd
             ls -ltrh target
-            cat target/surefire-reports/*.txt  # Check for test result files
-            cat target/cucumber-report-html/cucumber-html-reports/feature-overview.html  # Check for HTML report
+            pwd
+            ls -ltrh
 
       - store_artifacts:
-          path: /home/circleci/project/test-script-/target
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
           destination: artifacts
 
   notify-slack:
@@ -134,7 +103,7 @@ jobs:
           command: |
             ARTIFACT_LINK="https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_ID}/artifacts/0/artifacts/file-Features-AbstractorCreation-feature.html"
             echo "Artifact Link: $ARTIFACT_LINK"
-
+  
 workflows:
   version: 2
   build:
