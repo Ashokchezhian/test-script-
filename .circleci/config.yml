@@ -100,7 +100,7 @@ jobs:
       - run:
           name: Print Cloned Repository Contents
           command: |
-            cd test-script-
+            cd /home/circleci/project/test-script-
             ls -R
       - run:
           name: Print Environment Variables
