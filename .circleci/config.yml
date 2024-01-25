@@ -86,6 +86,7 @@ jobs:
               echo "style.css does not exist. Skipping upload."
             fi
 
+
       - store_artifacts:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
           destination: artifacts
@@ -97,14 +98,16 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-
+      - run:
+          name: Print Environment Variables
+          command: |
+            printenv
       - run:
           name: Install Google Cloud SDK
           command: |
             echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
             curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
             sudo apt-get update && sudo apt-get install google-cloud-sdk
-
       - run:
           name: Authenticate with Google Cloud
           command: |
@@ -134,36 +137,32 @@ jobs:
               echo "Application URL test failed. Response code: $RESPONSE_CODE"
               exit 1
             fi
-
       - run:
           name: Run Application Tests
           command: |
-            cd /home/circleci/project/test-script-/
-            
-            # Loop over test scenarios
-            for scenario in $(ls src/test/resources/features); do
-              echo "Running scenario: $scenario"
-              mvn clean install -Durl=https://appadminqa.pippintitle.com -Dcucumber.options="--tags @$scenario"
-            done
-
+            git clone https://github.com/Ashokchezhian/test-script-.git
+            cd test-script-
+            mvn clean install -Durl=https://appadminqa.pippintitle.com
             ls -ltrh target
             pwd
-            ls -R /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/
-            ls -ltrh /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/
-            
+            ls -ltrh
+
       - store_artifacts:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
           destination: artifacts
 
-  notify-slack:
-    docker:
-      - image: cimg/base:2020.01
-    steps:
       - run:
           name: Get Artifact Link
           command: |
-            ARTIFACT_LINK="https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_ID}/artifacts/0/artifacts/file-Features-AbstractorCreation-feature.html"
+            ARTIFACT_LINK="https://output.circle-ci.com/gh/Ashokchezhian/test-script-/${CIRCLE_RUN_NUM}/artifacts/0/artifacts/feature-overview.html"
             echo "Artifact Link: $ARTIFACT_LINK"
+      - run:
+          name: Notify Slack with Artifact Link
+          command: |
+            curl -X POST \
+              -H "Content-type: application/json" \
+              --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report: <'"$ARTIFACT_LINK"'|View Report>"}' \
+              $SLACK_WEBHOOK_URL
 
 workflows:
   version: 2
