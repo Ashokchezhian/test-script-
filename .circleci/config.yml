@@ -30,7 +30,7 @@ jobs:
             GCP_SERVICE_ACCOUNT_KEY=$(op document get "gcp_auth" --out-file secret-plans.text --vault GCP_AUTH_VAULT)
             echo $GCP_SERVICE_ACCOUNT_KEY > service-account.json
             echo 'export GOOGLE_APPLICATION_CREDENTIALS=service-account.json' >> $BASH_ENV
-            cat /root/project/secret-plans.text > service-account.json
+            cat /root/project/secret-plans.text
       - persist_to_workspace:
           root: .
           paths:
@@ -59,12 +59,13 @@ jobs:
       - run:
           name: Build with Maven
           command: |
+            git clone https://github.com/Ashokchezhian/test-script-.git
+            cd test-script-
             mvn clean install
             ls -ltrh target
             cd target
             pwd
             ls -ltrh
-
       - store_artifacts:
           path: /home/circleci/project/test-script-/target
           destination: artifacts
@@ -133,7 +134,6 @@ jobs:
           command: |
             ARTIFACT_LINK="https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_ID}/artifacts/0/artifacts/file-Features-AbstractorCreation-feature.html"
             echo "Artifact Link: $ARTIFACT_LINK"
-      
 
 workflows:
   version: 2
