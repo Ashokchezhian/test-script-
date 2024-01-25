@@ -150,12 +150,15 @@ jobs:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
           destination: artifacts
 
+  notify-slack:
+    docker:
+      - image: cimg/base:2020.01
+    steps:
       - run:
           name: Get Artifact Link from GCS
           command: |
-            ARTIFACT_LINK=$(gsutil signurl -d 1h -m GET "$(gsutil -q stat gs://automation-css/automation-css/cucumber-report-html%20(6).zip/style.css | grep 'gs://')" | awk '{print $2}')
+            ARTIFACT_LINK=$(gsutil signurl -d 1h -m GET "$(gsutil -q stat gs://automation-css/automation-css/cucumber-report-html (6).zip/style.css | grep 'gs://')" | awk '{print $2}')
             echo "Artifact Link: $ARTIFACT_LINK"
-
       - run:
           name: Notify Slack with Artifact Link
           command: |
