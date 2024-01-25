@@ -131,7 +131,7 @@ jobs:
             cd test-script-
 
             # Loop over test scenarios
-            for scenario in $(ls src/test/resources/features); do
+            for scenario in $(ls /home/circleci/project/test-script-\target\cucumber-report-html\cucumber-html-reports\feature-overview.html); do
               echo "Running scenario: $scenario"
               mvn clean install -Durl=https://appadminqa.pippintitle.com -Dcucumber.options="--tags @$scenario"
             done
