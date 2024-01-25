@@ -86,7 +86,6 @@ jobs:
               echo "style.css does not exist. Skipping upload."
             fi
 
-
       - store_artifacts:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
           destination: artifacts
@@ -152,10 +151,11 @@ jobs:
           destination: artifacts
 
       - run:
-          name: Get Artifact Link
+          name: Get Artifact Link from GCS
           command: |
-            ARTIFACT_LINK="https://output.circle-ci.com/gh/Ashokchezhian/test-script-/${CIRCLE_RUN_NUM}/artifacts/0/artifacts/feature-overview.html"
+            ARTIFACT_LINK=$(gsutil signurl -d 1h -m GET service-account.json gs://automation-css/automation-css/cucumber-report-html%20(6).zip/style.css | awk '{print $4}')
             echo "Artifact Link: $ARTIFACT_LINK"
+
       - run:
           name: Notify Slack with Artifact Link
           command: |
@@ -176,6 +176,3 @@ workflows:
       - check_application:
           requires:
             - build_and_check
-      - notify-slack:
-          requires:
-            - check_application
