@@ -52,7 +52,7 @@ jobs:
       - run:
           name: Authenticate with Google Cloud
           command: |
-            file_path=`pwd`
+            file_path=$(pwd)
             echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
             gcloud auth activate-service-account --key-file=service-account.json
             gcloud auth list
@@ -60,22 +60,69 @@ jobs:
       - run:
           name: Build with Maven
           command: |
+            git clone https://github.com/Ashokchezhian/test-script-.git
+            cd test-script-
             mvn clean install
             ls -ltrh target
             cd target
             pwd
             ls -ltrh
 
-      - store_artifacts:
-          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
+      - run:
+          name: Check style.css existence
+          command: |
+            if [ -f /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/style.css ]; then
+              echo "style.css exists."
+            else
+              echo "style.css does not exist."
+            fi
 
-  check_application_url:
+      - run:
+          name: Upload Test Results CSS to GCS
+          command: |
+            if [ -f /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/style.css ]; then
+              gsutil cp /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/style.css "gs://automation-css/automation-css/cucumber-report-html (6).zip/"
+            else
+              echo "style.css does not exist. Skipping upload."
+            fi
+
+      - store_artifacts:
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
+          destination: artifacts
+
+  check_application:
     docker:
       - image: circleci/openjdk:11-jdk
     steps:
       - checkout
       - attach_workspace:
           at: .
+      - run:
+          name: Print Environment Variables
+          command: |
+            printenv
+      - run:
+          name: Install Google Cloud SDK
+          command: |
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+            sudo apt-get update && sudo apt-get install google-cloud-sdk
+      - run:
+          name: Authenticate with Google Cloud
+          command: |
+            file_path=$(pwd)
+            echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
+            gcloud auth activate-service-account --key-file=service-account.json
+            gcloud auth list
+            cat $BASH_ENV
+            
+      - run:
+         name: Check Network Access
+         command: |
+          # Replace 'https://appadminqa.pippintitle.com' with your actual application URL
+           APPLICATION_URL=https://appadminqa.pippintitle.com
+           curl -v $APPLICATION_URL
+
       - run:
           name: Test Application URL
           command: |
@@ -100,10 +147,23 @@ jobs:
             ls -ltrh
 
       - store_artifacts:
-          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/feature-overview.html
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
           destination: artifacts
 
-  
+      - run:
+          name: Get Artifact Link from GCS
+          command: |
+            ARTIFACT_LINK=$(gsutil signurl -d 1h -m GET "$(gsutil -q stat gs://automation-css/automation-css/cucumber-report-html%20(6).zip/style.css | grep 'gs://')" | awk '{print $2}')
+            echo "Artifact Link: $ARTIFACT_LINK"
+
+      - run:
+          name: Notify Slack with Artifact Link
+          command: |
+            curl -X POST \
+              -H "Content-type: application/json" \
+              --data '{"text":"Hello from CircleCI cron job! Build succeeded. Artifact report: <'"$ARTIFACT_LINK"'|View Report>"}' \
+              $SLACK_WEBHOOK_URL
+
 workflows:
   version: 2
   build:
@@ -113,9 +173,9 @@ workflows:
       - build_and_check:
           requires:
             - "list-1password-vaults"
-      - check_application_url:
+      - check_application:
           requires:
             - build_and_check
       - notify-slack:
           requires:
-            - check_application_url
+            - check_application
