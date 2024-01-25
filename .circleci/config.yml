@@ -93,11 +93,12 @@ jobs:
           name: Download CSS from Google Cloud Storage
           command: |
             BUCKET_NAME=your-gcp-bucket-name
-            FILE_PATH=automation-css/cucumber-report-html (6).zip
+            FILE_PATH="automation-css/cucumber-report-html (6).zip"
 
             gcloud auth activate-service-account --key-file=service-account.json
 
-            gsutil cp gs://$automation-css/$automation-css/cucumber-report-html (6).zip .
+            # Quote the FILE_PATH to handle special characters
+            gsutil cp "gs://$automation=css/$automation-css/cucumber-report-html (6).zip" .
 
       - persist_to_workspace:
           root: .
