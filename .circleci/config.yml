@@ -153,7 +153,7 @@ jobs:
       - run:
           name: Get Artifact Link from GCS
           command: |
-            ARTIFACT_LINK=$(gsutil signurl -d 1h -m GET service-account.json gs://automation-css/automation-css/cucumber-report-html%20(6).zip/style.css | awk '{print $4}')
+            ARTIFACT_LINK=$(gsutil signurl -d 1h -m GET "$(gsutil -q stat gs://automation-css/automation-css/cucumber-report-html%20(6).zip/style.css | grep 'gs://')" | awk '{print $2}')
             echo "Artifact Link: $ARTIFACT_LINK"
 
       - run:
@@ -176,3 +176,6 @@ workflows:
       - check_application:
           requires:
             - build_and_check
+      - notify-slack:
+          requires:
+            - check_application
