@@ -86,7 +86,6 @@ jobs:
               echo "style.css does not exist. Skipping upload."
             fi
 
-
       - store_artifacts:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
           destination: artifacts
@@ -98,6 +97,11 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - run:
+          name: Print Cloned Repository Contents
+          command: |
+            cd test-script-
+            ls -R
       - run:
           name: Print Environment Variables
           command: |
@@ -116,7 +120,7 @@ jobs:
             gcloud auth activate-service-account --key-file=service-account.json
             gcloud auth list
             cat $BASH_ENV
-
+            
       - run:
          name: Check Network Access
          command: |
@@ -125,17 +129,28 @@ jobs:
            curl -v $APPLICATION_URL
 
       - run:
-          name: Test Application Scenarios
+          name: Test Application URL
+          command: |
+            APPLICATION_URL=https://appadminqa.pippintitle.com
+            echo "Testing Application URL: $APPLICATION_URL"
+            RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" $APPLICATION_URL)
+            echo "Response code: $RESPONSE_CODE"
+            if [ $RESPONSE_CODE -eq 200 ]; then
+              echo "Application URL test succeeded. Response code: $RESPONSE_CODE"
+            else
+              echo "Application URL test failed. Response code: $RESPONSE_CODE"
+              exit 1
+            fi
+      - run:
+          name: Run Application Tests
           command: |
             git clone https://github.com/Ashokchezhian/test-script-.git
             cd test-script-
-
             # Loop over test scenarios
             for scenario in $(ls src/test/resources/features); do
               echo "Running scenario: $scenario"
               mvn clean install -Durl=https://appadminqa.pippintitle.com -Dcucumber.options="--tags @$scenario"
             done
-
             ls -ltrh target
             pwd
             ls -ltrh
