@@ -12,7 +12,29 @@ jobs:
             echo https://downloads.1password.com/linux/alpinelinux/stable/ >> /etc/apk/repositories
             wget https://downloads.1password.com/linux/keys/alpinelinux/support@1password.com-61ddfc31.rsa.pub -P /etc/apk/keys
             apk update
-      # ... (rest of the steps)
+      - run:
+          name: Install 1Password CLI
+          command: |
+            apk add 1password-cli
+      - run:
+          name: Authenticate with 1Password
+          command: |
+            export OP_SERVICE_ACCOUNT_TOKEN=$OP_SERVICE_ACCOUNT_TOKEN
+      - run:
+          name: List the user
+          command: | 
+            op user get --me 
+      - run:
+          name: List 1Password Vaults
+          command: |
+            GCP_SERVICE_ACCOUNT_KEY=$(op document get "gcp_auth" --out-file secret-plans.text --vault GCP_AUTH_VAULT)
+            echo $GCP_SERVICE_ACCOUNT_KEY > service-account.json
+            echo 'export GOOGLE_APPLICATION_CREDENTIALS=service-account.json' >> $BASH_ENV
+            cat /root/project/secret-plans.text > service-account.json
+      - persist_to_workspace:
+          root: .
+          paths:
+            - service-account.json
 
   build_and_check:
     docker:
@@ -31,17 +53,42 @@ jobs:
           name: Authenticate with Google Cloud
           command: |
             file_path=$(pwd)
-            echo "Current Directory: $file_path"
-            echo "Content of service-account.json:"
-            cat $file_path/service-account.json
-            echo "Setting GOOGLE_APPLICATION_CREDENTIALS..."
             echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
-            echo "Activating service account..."
-            gcloud auth activate-service-account --key-file=$file_path/service-account.json
-            echo "Checking authentication list..."
+            gcloud auth activate-service-account --key-file=service-account.json
             gcloud auth list
             cat $BASH_ENV
-      # ... (rest of the steps)
+      - run:
+          name: Build with Maven
+          command: |
+            git clone https://github.com/Ashokchezhian/test-script-.git
+            cd test-script-
+            mvn clean install
+            ls -ltrh target
+            cd target
+            pwd
+            ls -ltrh
+
+      - run:
+          name: Check style.css existence
+          command: |
+            if [ -f /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/style.css ]; then
+              echo "style.css exists."
+            else
+              echo "style.css does not exist."
+            fi
+
+      - run:
+          name: Upload Test Results CSS to GCS
+          command: |
+            if [ -f /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/style.css ]; then
+              gsutil cp /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports/style.css "gs://automation-css/automation-css/cucumber-report-html (6).zip/"
+            else
+              echo "style.css does not exist. Skipping upload."
+            fi
+
+      - store_artifacts:
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
+          destination: artifacts
 
   check_application:
     docker:
@@ -64,27 +111,67 @@ jobs:
           name: Authenticate with Google Cloud
           command: |
             file_path=$(pwd)
-            echo "Current Directory: $file_path"
-            echo "Content of service-account.json:"
-            cat $file_path/service-account.json
-            echo "Setting GOOGLE_APPLICATION_CREDENTIALS..."
             echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
-            echo "Activating service account..."
-            gcloud auth activate-service-account --key-file=$file_path/service-account.json
-            echo "Checking authentication list..."
+            gcloud auth activate-service-account --key-file=service-account.json
             gcloud auth list
             cat $BASH_ENV
             
-      # ... (rest of the steps)
+      - run:
+         name: Check Network Access
+         command: |
+          # Replace 'https://appadminqa.pippintitle.com' with your actual application URL
+           APPLICATION_URL=https://appadminqa.pippintitle.com
+           curl -v $APPLICATION_URL
+
+      - run:
+          name: Test Application URL
+          command: |
+            APPLICATION_URL=https://appadminqa.pippintitle.com
+            echo "Testing Application URL: $APPLICATION_URL"
+            RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" $APPLICATION_URL)
+            echo "Response code: $RESPONSE_CODE"
+            if [ $RESPONSE_CODE -eq 200 ]; then
+              echo "Application URL test succeeded. Response code: $RESPONSE_CODE"
+            else
+              echo "Application URL test failed. Response code: $RESPONSE_CODE"
+              exit 1
+            fi
+      - run:
+          name: Run Application Tests
+          command: |
+            git clone https://github.com/Ashokchezhian/test-script-.git
+            cd test-script-
+            mvn clean install -Durl=https://appadminqa.pippintitle.com
+            ls -ltrh target
+            pwd
+            ls -ltrh
+
+      - store_artifacts:
+          path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
+          destination: artifacts
 
   notify-slack:
     docker:
       - image: cimg/base:2020.01
     steps:
       - run:
+          name: Install Google Cloud SDK
+          command: |
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+            sudo apt-get update && sudo apt-get install google-cloud-sdk
+      - run:
+          name: Authenticate with Google Cloud
+          command: |
+            file_path=$(pwd)
+            echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
+            gcloud auth activate-service-account --key-file=service-account.json
+            gcloud auth list
+            cat $BASH_ENV
+      - run:
           name: Get Artifact Link
           command: |
-            ARTIFACT_LINK="https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_ID}/artifacts/0/artifacts/feature-overview.html"
+            ARTIFACT_LINK=$(gsutil -q stat "gs://automation-css/automation-css/cucumber-report-html (6).zip/style.css" | grep 'gs://' | awk '{print $3}')
             echo "Artifact Link: $ARTIFACT_LINK"
       - run:
           name: Notify Slack with Artifact Link
