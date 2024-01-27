@@ -154,6 +154,13 @@ jobs:
     docker:
       - image: circleci/openjdk:11-jdk
     steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Retrieve service-account.json
+          command: |
+            mkdir -p $HOME/.circleci/
+            cp service-account.json $HOME/.circleci/
       - run:
           name: Install Google Cloud SDK
           command: |
@@ -163,16 +170,11 @@ jobs:
       - run:
           name: Authenticate with Google Cloud
           command: |
-            file_path=$(pwd)
+            file_path=$HOME/.circleci/
             echo "export GOOGLE_APPLICATION_CREDENTIALS=$file_path/service-account.json" >> $BASH_ENV
-            gcloud auth activate-service-account --key-file=service-account.json
+            gcloud auth activate-service-account --key-file=$HOME/.circleci/service-account.json
             gcloud auth list
             cat $BASH_ENV
-      - run:
-          name: Retrieve service-account.json
-          command: |
-            mkdir -p $HOME/.circleci/
-            cp service-account.json $HOME/.circleci/
       - run:
           name: Get Artifact Link
           command: |
