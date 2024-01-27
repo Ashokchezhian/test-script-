@@ -178,7 +178,7 @@ jobs:
       - run:
           name: Get Artifact Link
           command: |
-            gsutil stat "gs://automation-css/automation-css/cucumber-report-html (6).zip/style.css"
+            ARTIFACT_LINK="https://storage.cloud.google.com/automation-css/cucumber-report-html%20(6).zip"
 
       - run:
           name: Notify Slack with Artifact Link
