@@ -150,6 +150,11 @@ jobs:
           path: /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports
           destination: artifacts
 
+      - run:
+          name: Upload Artifacts to GCS
+          command: |
+            gsutil cp -r /home/circleci/project/test-script-/target/cucumber-report-html/cucumber-html-reports gs://automation-css/automation-css/cucumber-report-html
+
   notify-slack:
     docker:
       - image: circleci/openjdk:11-jdk
@@ -178,7 +183,7 @@ jobs:
       - run:
           name: Get Artifact Link
           command: |
-            ARTIFACT_LINK="https://storage.cloud.google.com/automation-css/cucumber-report-html%20(6).zip"
+            ARTIFACT_LINK="https://storage.cloud.google.com/automation-css/cucumber-report-html"
 
       - run:
           name: Notify Slack with Artifact Link
